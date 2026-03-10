@@ -1,9 +1,8 @@
 """
 title: Email Composer
-author: Classic298
+author: open-webui
 version: 1.1.0
-description: Renders composed emails as interactive Rich UI cards with rich text editing, markdown auto-conversion, To/CC/BCC chips, priority badges, copy, download .eml, mailto, autosave, and word count.
-Requires 'Allow Iframe Same-Origin Access' in Settings > Interface for autosave feature, to have changes persisted across page reloads. All other features work without it!
+description: Renders composed emails as interactive Rich UI cards with rich text editing, markdown auto-conversion, To/CC/BCC chips, priority badges, copy, download .eml, mailto, autosave, and word count. Requires 'Allow Iframe Same-Origin Access' in Settings > Interface for autosave (all other features work without it). Note: mailto is plain text only and may truncate long emails; use Download .eml for formatted or long emails.
 """
 
 import json
@@ -207,7 +206,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI
     <div class="header-actions">
       <button class="btn" id="btnCopy" title="Copy body"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9.75a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184"/></svg></button>
       <button class="btn" id="btnDownload" title="Download .eml"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg></button>
-      <a class="btn" id="btnMailto" title="Open in mail app" href="mailto:"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"/></svg></a>
+      <a class="btn" id="btnMailto" title="Open in mail app (plain text only — use Download .eml for formatting)" href="mailto:"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"/></svg></a>
     </div>
   </div>
 
@@ -325,6 +324,18 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI
 
   function getBodyText(){return bodyEl.innerText||bodyEl.textContent||''}
 
+  // Reliable HTML-to-plain-text for mailto and copy (innerText can lose newlines in contenteditable)
+  function getPlainText(){
+    var h=bodyEl.innerHTML;
+    h=h.replace(/<br\s*\/?>/gi,'\n');
+    h=h.replace(/<\/(h[1-6]|p|div|li|blockquote)>/gi,'\n');
+    h=h.replace(/<li[^>]*>/gi,'- ');
+    h=h.replace(/<[^>]+>/g,'');
+    h=h.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&nbsp;/g,' ');
+    h=h.replace(/\n{3,}/g,'\n\n');
+    return h.trim();
+  }
+
   function updateCounts(){
     var t=getBodyText(),w=t.trim()?t.trim().split(/\s+/).length:0;
     $('wordCount').textContent=w+(w===1?' word':' words');
@@ -332,7 +343,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI
   }
 
   function updateMailto(){
-    var to=chips.to.join(','),cc=chips.cc.join(','),bcc=chips.bcc.join(','),sub=subjectIn.value,body=getBodyText(),p=[];
+    var to=chips.to.join(','),cc=chips.cc.join(','),bcc=chips.bcc.join(','),sub=subjectIn.value,body=getPlainText(),p=[];
     if(sub)p.push('subject='+encodeURIComponent(sub));
     if(body)p.push('body='+encodeURIComponent(body));
     if(cc)p.push('cc='+encodeURIComponent(cc));
@@ -351,7 +362,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI
   function fallbackCopy(t){var a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;left:-9999px';document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch(e){}a.remove()}
 
   function copyBody(){
-    var t=getBodyText();
+    var t=getPlainText();
     if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).catch(function(){fallbackCopy(t)});
     else fallbackCopy(t);
     copyBtn.innerHTML=checkSvg;copyBtn.classList.add('btn-success');
@@ -361,6 +372,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI
   function downloadEml(){
     var to=chips.to.join(', '),cc=chips.cc.join(', '),bcc=chips.bcc.join(', ');
     var sub=subjectIn.value,htmlBody=bodyEl.innerHTML;
+    var boundary='----=_Part_'+Date.now();
     var eml='MIME-Version: 1.0\r\nDate: '+new Date().toUTCString()+'\r\nTo: '+to+'\r\n';
     if(cc)eml+='Cc: '+cc+'\r\n';
     if(bcc)eml+='Bcc: '+bcc+'\r\n';
@@ -451,3 +463,4 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI
 </script>
 </body>
 </html>"""
+
