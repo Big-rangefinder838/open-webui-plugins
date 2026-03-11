@@ -51,4 +51,4 @@ Each plugin is a standalone Python file you can paste directly into Open WebUI's
 
 ## Contributing
 
-Found a bug or have an idea? Open an issue or PR. Contributions welcome.
+Found a bug or have an idea? Open an issue.
