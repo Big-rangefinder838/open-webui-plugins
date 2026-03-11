@@ -1,7 +1,7 @@
 """
 title: Email Composer
-author: open-webui
-version: 1.1.0
+author: Classic298
+version: 1.0.0
 description: Renders composed emails as interactive Rich UI cards with rich text editing, markdown auto-conversion, To/CC/BCC chips, priority badges, copy, download .eml, mailto, autosave, and word count. Requires 'Allow Iframe Same-Origin Access' in Settings > Interface for autosave (all other features work without it). Note: mailto is plain text only and may truncate long emails; use Download .eml for formatted or long emails.
 """
 
