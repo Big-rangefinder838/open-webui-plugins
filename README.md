@@ -42,7 +42,7 @@ Each plugin is a standalone Python file you can paste directly into Open WebUI's
 ## How to Install a Plugin
 
 1. Open the plugin file and copy its contents
-2. In Open WebUI, go to **Workspace → Tools** (or Functions, depending on the type)
+2. In Open WebUI, go to **Workspace → Tools** (or Admin Panel → Functions, depending on the type)
 3. Click **+ Create New**
 4. Paste the code, click **Save**
 5. Enable it for your model — done
