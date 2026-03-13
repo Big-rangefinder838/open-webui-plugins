@@ -2,7 +2,7 @@
 
 Renders interactive HTML/SVG visualizations inline in chat. Includes a full design system with theme-aware colors, SVG utility classes, and a communication bridge that lets visualizations send prompts back to the chat.
 
-<video src="assets/demo.mp4" controls width="100%"></video>
+[![▶ Watch demo](assets/preview.png)](assets/demo.mp4)
 
 ## Features
 
