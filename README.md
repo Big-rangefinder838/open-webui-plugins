@@ -20,7 +20,7 @@ Each plugin lives in its own folder with a README explaining what it does, what 
 | Type | What it does | Where to install |
 |------|-------------|-----------------|
 | **Tools** | Give your model new capabilities it can call (web search, APIs, rendering) | Workspace → Tools |
-| **Skills** | Structured instructions that teach a model how to use a tool's design system | Workspace → Knowledge (as Skill) |
+| **Skills** | Structured instructions that teach a model how to do specified tasks or workflows | Workspace → Skills |
 | **Filters** | Transform messages before they reach the model or before they're shown to you | Admin Panel → Functions |
 | **Pipes** | Custom model endpoints — proxy, merge, or create entirely new model behaviors | Admin Panel → Functions |
 | **Actions** | Buttons that appear below messages for quick actions | Admin Panel → Functions |
@@ -34,21 +34,6 @@ Each plugin lives in its own folder with a README explaining what it does, what 
 3. Some plugins are a single file, others are multi-component — the README will guide you
 
 ---
-
-## Repository Structure
-
-```
-open-webui-plugins/
-├── email-composer/
-│   ├── README.md
-│   └── tool.py
-├── inline-visualizer/
-│   ├── README.md
-│   ├── tool.py
-│   └── skill.md
-├── README.md
-└── LICENSE
-```
 
 Each plugin folder is self-contained with all necessary files and documentation.
 
