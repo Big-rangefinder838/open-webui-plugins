@@ -2,7 +2,19 @@
 
 Renders interactive HTML/SVG visualizations inline in chat. Includes a full design system with theme-aware colors, SVG utility classes, and a communication bridge that lets visualizations send prompts back to the chat.
 
-[![▶ Watch demo](assets/preview.png)](assets/demo.mp4?raw=true)
+<table>
+  <tr>
+    <td><img src="assets/screenshot_1.png" alt="Interactive quiz" width="400"/></td>
+    <td><img src="assets/screenshot_2.png" alt="Transformer architecture" width="400"/></td>
+  </tr>
+  <tr>
+    <td><img src="assets/screenshot_3.png" alt="Periodic table" width="400"/></td>
+    <td><img src="assets/screenshot_4.png" alt="Bar chart" width="400"/></td>
+  </tr>
+  <tr>
+    <td colspan="2"><img src="assets/screenshot_5.png" alt="Load path diagram" width="400"/></td>
+  </tr>
+</table>
 
 ## Features
 
