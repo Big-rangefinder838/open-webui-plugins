@@ -33,7 +33,7 @@ AI-powered email drafting with an interactive Rich UI card embedded directly in 
 
 ### Optional
 
-- Enable **Allow Iframe Same-Origin Access** in Settings → Interface **(for autosave support only - all other features work without it)**
+- Enable **iframe Sandbox Allow Same Origin** in Settings → Interface **(for autosave support only - all other features work without it)**
 
 ## Usage
 

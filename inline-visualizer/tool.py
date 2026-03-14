@@ -1,7 +1,7 @@
 """
 title: Inline Visualizer
 author: Classic298
-version: 1.0.0
+version: 1.1.0
 description: Renders interactive HTML/SVG visualizations inline in chat. For design system instructions, the model should call view_skill("visualize").
 """
 
@@ -176,77 +176,13 @@ window.addEventListener('load', reportHeight);
 window.addEventListener('resize', reportHeight);
 new ResizeObserver(reportHeight).observe(document.body);
 
-// --- sendPrompt bridge (requires Allow Iframe Same-Origin Access) ---
+// --- sendPrompt bridge (requires iframe Sandbox Allow Same Origin) ---
 function sendPrompt(text) {
   try {
-    var el = parent.document.querySelector('#chat-input');
-    if (!el) return;
-
-    // Approach: use ProseMirror's view to dispatch a proper transaction
-    var viewDesc = el.pmViewDesc;
-    if (viewDesc && viewDesc.view) {
-      var view = viewDesc.view;
-      var state = view.state;
-      var schema = state.schema;
-      var tr = state.tr;
-
-      // Delete all existing content
-      if (state.doc.content.size > 2) {
-        tr = tr.delete(1, state.doc.content.size - 1);
-      }
-
-      // Split text into lines and build paragraph nodes
-      var lines = text.split('\\n');
-      var nodes = [];
-      for (var i = 0; i < lines.length; i++) {
-        var line = lines[i];
-        if (i === 0) {
-          // First line: insert as text into the existing first paragraph
-          if (line) tr = tr.insertText(line, 1);
-        } else {
-          // Subsequent lines: create new paragraph nodes
-          var para = schema.nodes.paragraph.create(
-            {},
-            line ? schema.text(line) : undefined
-          );
-          nodes.push(para);
-        }
-      }
-
-      // Insert remaining paragraph nodes after the first paragraph
-      if (nodes.length > 0) {
-        for (var j = 0; j < nodes.length; j++) {
-          var insertPos = tr.doc.content.size;
-          tr = tr.insert(insertPos, nodes[j]);
-        }
-      }
-
-      view.dispatch(tr);
-      el.focus();
-
-      // Click send after editor state settles
-      setTimeout(function() {
-        var btn = parent.document.querySelector('#send-message-button');
-        if (btn) btn.click();
-      }, 300);
-      return;
-    }
-
-    // Fallback: execCommand approach for non-ProseMirror editors
-    el.focus();
-    var range = parent.document.createRange();
-    range.selectNodeContents(el);
-    var sel = parent.window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
-    parent.document.execCommand('delete', false);
-    // Insert without newlines to avoid paragraph explosion
-    parent.document.execCommand('insertText', false, text.replace(/\\n/g, ' — '));
-    setTimeout(function() {
-      var btn = parent.document.querySelector('#send-message-button');
-      if (btn) btn.click();
-    }, 300);
-  } catch(e) { /* allowSameOrigin not enabled */ }
+    // Use Open WebUI's native postMessage protocol.
+    // submitPrompt automatically queues the message if the AI is still generating.
+    parent.postMessage({ type: 'input:prompt:submit', text: text }, '*');
+  } catch(e) { /* iframe sandbox restriction */ }
 }
 
 // --- Open link in parent window ---
@@ -293,7 +229,7 @@ class Tools:
         - Color ramp classes: .c-purple .c-teal .c-coral .c-pink .c-gray .c-blue .c-green .c-amber .c-red
         - Base element styles (button, range, select, code, headings)
         - Height auto-sizing script
-        - sendPrompt(text) function — sends a message to the chat (requires Allow Iframe Same-Origin Access)
+        - sendPrompt(text) function — sends a message to the chat (requires iframe Sandbox Allow Same Origin)
         - openLink(url) function — opens a URL in a new tab
 
         :param html_code: HTML or SVG content fragment. Do NOT include DOCTYPE, html, head, or body tags.

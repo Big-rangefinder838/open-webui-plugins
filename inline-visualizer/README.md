@@ -67,7 +67,7 @@ Tested with Claude Haiku 4.5 and Claude Opus 4.5.
 ### 4. (Optional) Enable Same-Origin Access (required for sendPrompt)
 
 1. Go to **Settings → Interface**
-2. Enable **Allow Iframe Same-Origin Access**
+2. Enable **iframe Sandbox Allow Same Origin**
 
 Without this, visualizations render normally but **interactive buttons that send prompts back to the chat will not work**.
 
