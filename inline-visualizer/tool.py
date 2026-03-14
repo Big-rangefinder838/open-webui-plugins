@@ -5,7 +5,6 @@ version: 1.1.0
 description: Renders interactive HTML/SVG visualizations inline in chat. For design system instructions, the model should call view_skill("visualize").
 """
 
-from pydantic import BaseModel, Field
 from fastapi.responses import HTMLResponse
 
 
@@ -214,11 +213,6 @@ def _build_html(content: str) -> str:
 
 
 class Tools:
-    class Valves(BaseModel):
-        pass
-
-    def __init__(self):
-        self.valves = self.Valves()
 
     def render_visualization(
         self,
@@ -244,7 +238,8 @@ class Tools:
 
         :param html_code: HTML or SVG content fragment. Do NOT include DOCTYPE, html, head, or body tags.
                           Structure: <style> first (prefer inline styles), visible content next, <script> last.
-                          For charts, load Chart.js via <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>.
+                          Chart.js is auto-injected by Open WebUI when same-origin is enabled. Otherwise, load via CDN:
+                          <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>.
                           For complex visualizations, load D3 via <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>.
         :param title: Short descriptive title for the visualization.
         :return: Interactive rich embed rendered in the chat.
