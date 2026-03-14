@@ -169,7 +169,12 @@ INJECTED_SCRIPTS = """
 
 // --- Height reporting ---
 function reportHeight() {
-  var h = document.documentElement.scrollHeight;
+  // Temporarily collapse body so scrollHeight reflects actual content,
+  // not the iframe's previously set height (fixes shrink-on-collapse).
+  var b = document.body;
+  b.style.height = '0';
+  var h = b.scrollHeight;
+  b.style.height = '';
   parent.postMessage({ type: 'iframe:height', height: h }, '*');
 }
 window.addEventListener('load', reportHeight);

@@ -103,7 +103,7 @@ Always use this SVG boilerplate:
 </svg>
 ```
 
-- viewBox width **always 680** — set H to fit content (last element bottom + 40px)
+- viewBox width **always 680** — set H to **tightly fit** content (last element bottom + 40px). **Never oversize** — calculate the actual bottom of your last SVG element and add 40px. An SVG with content ending at y=180 must use H=220, not 500
 - Safe area: x=40 to x=640
 - Background transparent — host provides container
 
@@ -281,7 +281,7 @@ Without sendPrompt, interactive elements inside the iframe are isolated — they
 
 ### How it works technically
 
-The function is auto-injected by the tool. It accesses the parent page's chat input (a ProseMirror/Tiptap editor), sets the text content via the editor's internal transaction API, and clicks the send button. This requires **Allow Iframe Same-Origin Access** to be enabled in Open WebUI settings — without it, the function silently fails (the visualization still works, but clicks do nothing).
+The function is auto-injected by the tool. It uses Open WebUI's native `postMessage` protocol to submit the text as a user message. If the AI is still generating a response, the message is automatically queued and sent once generation completes. This requires **iframe Sandbox Allow Same Origin** to be enabled in Open WebUI settings — without it, the function silently fails (the visualization still works, but clicks do nothing).
 
 ### Writing good sendPrompt text
 
@@ -406,8 +406,9 @@ Use `openLink` for external references, documentation links, or source code link
 1. **Arrow through a box** — trace coordinates against every box
 2. **Text overflow** — check (text_width + 2×padding) fits the rect
 3. **viewBox too small** — content clipped at bottom
-4. **Floating labels** — every text needs a box, legend, or leader line
-5. **Connector without fill="none"** — renders as black shape
-6. **Missing dominant-baseline="central"** — text sits 4px too high
-7. **Missing arrow marker in defs** — always include it
-8. **Hardcoded colors** — always use CSS variables or ramp classes
+4. **viewBox too large** — creates wasteful empty space below the diagram. Calculate actual content bottom + 40px
+5. **Floating labels** — every text needs a box, legend, or leader line
+6. **Connector without fill="none"** — renders as black shape
+7. **Missing dominant-baseline="central"** — text sits 4px too high
+8. **Missing arrow marker in defs** — always include it
+9. **Hardcoded colors** — always use CSS variables or ramp classes
