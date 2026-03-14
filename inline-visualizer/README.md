@@ -11,9 +11,6 @@ Renders interactive HTML/SVG visualizations inline in chat. Includes a full desi
     <td><img src="assets/screenshot_3.png" alt="Periodic table" width="400"/></td>
     <td><img src="assets/screenshot_4.png" alt="Bar chart" width="400"/></td>
   </tr>
-  <tr>
-    <td colspan="2"><img src="assets/screenshot_5.png" alt="Load path diagram" width="400"/></td>
-  </tr>
 </table>
 
 ## Features
