@@ -114,6 +114,7 @@ SVG_CLASSES = """
 
 BASE_STYLES = """
 * { box-sizing: border-box; margin: 0; font-family: var(--font-sans); }
+html, body { overflow: hidden; }
 body { background: transparent; color: var(--color-text-primary); line-height: 1.5; padding: 8px; }
 h1 { font-size: 22px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 12px; }
 h2 { font-size: 18px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 8px; }
@@ -180,6 +181,10 @@ function reportHeight() {
 window.addEventListener('load', reportHeight);
 window.addEventListener('resize', reportHeight);
 new ResizeObserver(reportHeight).observe(document.body);
+// Explicitly handle <details> toggle — ResizeObserver misses this in some browsers
+document.addEventListener('toggle', function() {
+  setTimeout(reportHeight, 50);
+}, true);
 
 // --- sendPrompt bridge (requires iframe Sandbox Allow Same Origin) ---
 function sendPrompt(text) {
