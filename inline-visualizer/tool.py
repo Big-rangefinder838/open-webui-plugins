@@ -5,6 +5,8 @@ version: 1.2.0
 description: Renders interactive HTML/SVG visualizations inline in chat. For design system instructions, the model should call view_skill("visualize").
 """
 
+import re
+
 from fastapi.responses import HTMLResponse
 
 
@@ -148,34 +150,89 @@ code {
 """
 
 # ---------------------------------------------------------------------------
-# Injected JavaScript — theme detection, height reporting, bridges
+# Injected JavaScript — theme detection (head), height reporting & bridges (body)
 # ---------------------------------------------------------------------------
 
-INJECTED_SCRIPTS = """
+# Runs in <head> BEFORE any user content so CSS variables resolve to the
+# correct theme when model scripts read them at parse time.
+# Also sets up a MutationObserver to react to live theme switches.
+THEME_DETECTION_SCRIPT = """
 <script>
-// --- Theme detection ---
 (function() {
+  function detectTheme(root) {
+    return root.classList.contains('dark')
+      || root.getAttribute('data-theme') === 'dark'
+      || getComputedStyle(root).colorScheme === 'dark';
+  }
+
+  function applyTheme(isDark) {
+    var theme = isDark ? 'dark' : 'light';
+    if (document.documentElement.getAttribute('data-theme') === theme) return;
+    document.documentElement.setAttribute('data-theme', theme);
+    // Re-render Chart.js instances with updated theme colors
+    if (window.Chart && Chart.instances) {
+      var s = getComputedStyle(document.documentElement);
+      var tc = s.getPropertyValue('--color-text-secondary').trim();
+      var gc = s.getPropertyValue('--color-border-tertiary').trim();
+      Chart.defaults.color = tc;
+      Chart.defaults.borderColor = gc;
+      Object.values(Chart.instances).forEach(function(chart) {
+        Object.values(chart.options.scales || {}).forEach(function(scale) {
+          if (scale.ticks) scale.ticks.color = tc;
+          if (scale.grid) scale.grid.color = gc;
+        });
+        var leg = (chart.options.plugins || {}).legend;
+        if (leg && leg.labels) leg.labels.color = tc;
+        chart.update();
+      });
+    }
+  }
+
   try {
     var p = parent.document.documentElement;
-    var isDark = p.classList.contains('dark')
-      || p.getAttribute('data-theme') === 'dark'
-      || getComputedStyle(p).colorScheme === 'dark';
-    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    applyTheme(detectTheme(p));
+    // Watch for live theme changes on the parent
+    new MutationObserver(function() {
+      applyTheme(detectTheme(p));
+    }).observe(p, { attributes: true, attributeFilter: ['class', 'data-theme', 'style'] });
   } catch(e) {
-    // allowSameOrigin not enabled — fall back to OS preference
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      document.documentElement.setAttribute('data-theme', 'dark');
+    // No same-origin access — fall back to OS preference
+    var mq = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+    if (mq) {
+      applyTheme(mq.matches);
+      mq.addEventListener('change', function(e) { applyTheme(e.matches); });
     }
   }
 })();
+</script>
+"""
+
+BODY_SCRIPTS = """
+<script>
 
 // --- Height reporting ---
 function reportHeight() {
+  var b = document.body;
+  // Measure SVG overflow (content beyond viewBox) before collapsing body,
+  // since getBoundingClientRect needs normal layout.
+  var svgOverflow = 0;
+  document.querySelectorAll('svg[viewBox]').forEach(function(svg) {
+    try {
+      var bbox = svg.getBBox();
+      var vb = svg.viewBox.baseVal;
+      if (vb && vb.width > 0 && vb.height > 0) {
+        var overflow = bbox.y + bbox.height - (vb.y + vb.height);
+        if (overflow > 0) {
+          var scale = svg.getBoundingClientRect().width / vb.width;
+          svgOverflow += Math.ceil(overflow * scale);
+        }
+      }
+    } catch(e) {}
+  });
   // Temporarily collapse body so scrollHeight reflects actual content,
   // not the iframe's previously set height (fixes shrink-on-collapse).
-  var b = document.body;
   b.style.height = '0';
-  var h = b.scrollHeight;
+  var h = b.scrollHeight + svgOverflow;
   b.style.height = '';
   parent.postMessage({ type: 'iframe:height', height: h }, '*');
 }
@@ -187,8 +244,9 @@ document.addEventListener('toggle', function() {
   setTimeout(reportHeight, 50);
 }, true);
 
-// --- Chart.js theme defaults (runs after chart scripts load) ---
+// --- Post-render fixes (theme defaults, overlap prevention) ---
 window.addEventListener('load', function() {
+  // Chart.js theme defaults + legend overflow prevention
   if (window.Chart) {
     var s = getComputedStyle(document.documentElement);
     var textColor = s.getPropertyValue('--color-text-secondary').trim();
@@ -196,7 +254,59 @@ window.addEventListener('load', function() {
     Chart.defaults.color = textColor;
     Chart.defaults.borderColor = gridColor;
     Chart.defaults.plugins.legend.labels.color = textColor;
+    Chart.defaults.plugins.legend.maxHeight = 120;
+    Chart.defaults.plugins.legend.labels.boxWidth = 12;
+    Chart.defaults.plugins.legend.labels.font = { size: 11 };
+    // Re-render existing charts with corrected legend constraints
+    Object.values(Chart.instances || {}).forEach(function(chart) {
+      var leg = chart.options.plugins && chart.options.plugins.legend;
+      if (leg) {
+        leg.maxHeight = leg.maxHeight || 120;
+        if (leg.labels) {
+          leg.labels.boxWidth = leg.labels.boxWidth || 12;
+        }
+      }
+      chart.update();
+    });
   }
+
+  // SVG label overlap — group texts by x-center, stagger if adjacent groups overlap
+  document.querySelectorAll('svg').forEach(function(svg) {
+    var texts = Array.from(svg.querySelectorAll('text'));
+    if (texts.length < 4) return;
+    var groups = [];
+    texts.forEach(function(t) {
+      var r = t.getBoundingClientRect();
+      if (r.width < 1) return;
+      var cx = r.left + r.width / 2;
+      for (var i = 0; i < groups.length; i++) {
+        if (Math.abs(groups[i].cx - cx) < 15) {
+          groups[i].items.push({ el: t, rect: r });
+          return;
+        }
+      }
+      groups.push({ cx: cx, items: [{ el: t, rect: r }] });
+    });
+    if (groups.length < 3) return;
+    groups.sort(function(a, b) { return a.cx - b.cx; });
+    var needsStagger = false;
+    for (var i = 0; i < groups.length - 1; i++) {
+      var maxR = 0, minL = Infinity;
+      groups[i].items.forEach(function(it) { if (it.rect.right > maxR) maxR = it.rect.right; });
+      groups[i+1].items.forEach(function(it) { if (it.rect.left < minL) minL = it.rect.left; });
+      if (maxR > minL - 2) { needsStagger = true; break; }
+    }
+    if (needsStagger) {
+      for (var i = 1; i < groups.length; i += 2) {
+        groups[i].items.forEach(function(it) {
+          var cy = parseFloat(it.el.getAttribute('y') || 0);
+          it.el.setAttribute('y', String(cy + 18));
+        });
+      }
+    }
+  });
+
+  setTimeout(reportHeight, 100);
 });
 
 // --- sendPrompt bridge (requires iframe Sandbox Allow Same Origin) ---
@@ -216,13 +326,32 @@ function openLink(url) {
 </script>
 """
 
+# Kept for backwards compatibility in case anything references the old name
+INJECTED_SCRIPTS = BODY_SCRIPTS
+
+
+_WRAPPER_TAG_RE = re.compile(
+    r'<!DOCTYPE[^>]*>|</?html[^>]*>|</?head[^>]*>|</?body[^>]*>|<meta[^>]*/?>',
+    re.IGNORECASE,
+)
+
+
+def _sanitize_content(content: str) -> str:
+    """Strip document wrapper tags that models sometimes include."""
+    content = _WRAPPER_TAG_RE.sub('', content)
+    # Collapse runs of 3+ blank lines into a single blank line
+    content = re.sub(r'\n{3,}', '\n\n', content)
+    return content.strip()
+
 
 def _build_html(content: str) -> str:
     """Wrap a user-provided HTML/SVG fragment in the full Rich UI shell."""
+    content = _sanitize_content(content)
     return (
         "<!DOCTYPE html><html><head>"
         f"<style>{THEME_CSS}\n{SVG_CLASSES}\n{BASE_STYLES}</style>"
-        f"</head><body>\n{content}\n{INJECTED_SCRIPTS}</body></html>"
+        f"{THEME_DETECTION_SCRIPT}"
+        f"</head><body>\n{content}\n{BODY_SCRIPTS}</body></html>"
     )
 
 
