@@ -1,7 +1,7 @@
 """
 title: Inline Visualizer
 author: Classic298
-version: 1.1.0
+version: 1.2.0
 description: Renders interactive HTML/SVG visualizations inline in chat. For design system instructions, the model should call view_skill("visualize").
 """
 
@@ -115,6 +115,8 @@ BASE_STYLES = """
 * { box-sizing: border-box; margin: 0; font-family: var(--font-sans); }
 html, body { overflow: hidden; }
 body { background: transparent; color: var(--color-text-primary); line-height: 1.5; padding: 8px; }
+svg { overflow: visible; }
+svg text { fill: var(--color-text-primary); }
 h1 { font-size: 22px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 12px; }
 h2 { font-size: 18px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 8px; }
 h3 { font-size: 16px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 6px; }
@@ -184,6 +186,18 @@ new ResizeObserver(reportHeight).observe(document.body);
 document.addEventListener('toggle', function() {
   setTimeout(reportHeight, 50);
 }, true);
+
+// --- Chart.js theme defaults (runs after chart scripts load) ---
+window.addEventListener('load', function() {
+  if (window.Chart) {
+    var s = getComputedStyle(document.documentElement);
+    var textColor = s.getPropertyValue('--color-text-secondary').trim();
+    var gridColor = s.getPropertyValue('--color-border-tertiary').trim();
+    Chart.defaults.color = textColor;
+    Chart.defaults.borderColor = gridColor;
+    Chart.defaults.plugins.legend.labels.color = textColor;
+  }
+});
 
 // --- sendPrompt bridge (requires iframe Sandbox Allow Same Origin) ---
 function sendPrompt(text) {

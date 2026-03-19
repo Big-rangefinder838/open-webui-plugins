@@ -25,6 +25,7 @@ These rules keep visuals clean, accessible, and consistent with the host UI:
 - **Round displayed numbers** — use Math.round, toLocaleString, or Intl.NumberFormat
 - **Min font size 11px** — smaller becomes unreadable on most screens
 - **Text weights** — 400 regular, 500 for emphasis only
+- **Never hardcode text colors** — always use CSS variables (`var(--color-text-primary)`) or SVG classes (`.t`, `.ts`, `.th`). The host UI supports dark mode; hardcoded black/white text will be unreadable in one mode
 - **All explanatory text goes in your prose response**, not inside the visual (keeps visuals data-dense and lets the model's response provide context)
 
 ---
@@ -220,7 +221,7 @@ new Chart(ctx, {
 **Chart rules:**
 - Wrap canvas in container with `position: relative` and explicit height
 - Always `responsive: true`, `maintainAspectRatio: false`
-- Read CSS variables for text/border colors — never hardcode
+- **Read CSS variables for text/border colors** — the tool auto-sets `Chart.defaults.color` as a fallback, but always set `ticks.color`, `legend.labels.color`, and `grid.color` explicitly from CSS variables to ensure correct theme colors. Never use black/white or any hardcoded color for text or grid.
 - `borderRadius: 4` on bars
 - Line charts: `tension: 0.3` for smooth curves
 - Doughnut: `cutout: '60%'` — never use pie
