@@ -10,8 +10,8 @@ Each plugin lives in its own folder with a README explaining what it does, what 
 
 | Plugin | Description | Components |
 |--------|-------------|------------|
-| [Email Composer](email-composer/) | AI-powered email drafting with an interactive Rich UI card. Rich text editing, To/CC/BCC chips, priority, download .eml, one-click send via mailto. [**🚀 Quick Setup →**](email-composer/#setup) | Tool |
-| [Inline Visualizer](inline-visualizer/) | Interactive HTML/SVG visualizations inline in chat. Full design system with theme-aware colors, SVG utilities, Chart.js/D3 support, and a sendPrompt bridge for conversational drill-down. [**🚀 Quick Setup →**](inline-visualizer/#setup) | Tool + Skill |
+| [Email Composer](email-composer/) | AI-powered email drafting with an interactive Rich UI card. Rich text editing, To/CC/BCC chips, priority, download .eml, one-click send via mailto. <br> [**🚀 Quick Setup →**](email-composer/#setup) | Tool |
+| [Inline Visualizer](inline-visualizer/) | Interactive HTML/SVG visualizations inline in chat. Full design system with theme-aware colors, SVG utilities, Chart.js/D3 support, and a sendPrompt bridge for conversational drill-down. <br> [**🚀 Quick Setup →**](inline-visualizer/#setup) | Tool + Skill |
 
 ---
 
