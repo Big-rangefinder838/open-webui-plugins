@@ -2,7 +2,7 @@
 
 Renders interactive HTML/SVG visualizations inline in chat. Includes a full design system with theme-aware colors, SVG utility classes, and a communication bridge that lets visualizations send prompts back to the chat.
 
-> **🚀 [Jump to Setup Guide](#setup)** — get up and running in under 2 minutes.
+> **🚀 [Jump to Setup Guide](#setup)** — get up and running in under 1 minute.
 
 <table>
   <tr>
@@ -100,6 +100,9 @@ When clicked, this fills the chat input and sends the message automatically, ena
 
 ## Security
 
+> [!WARNING]
+> When *iframe Sandbox Allow Same Origin* is enabled (step 4 above), JavaScript inside the visualization can access the parent Open WebUI page. This is a platform-level setting that the tool cannot restrict. If you do not need the `sendPrompt` bridge, leave same-origin **disabled** for maximum isolation.
+
 The tool applies a Content Security Policy (CSP) to every rendered visualization. The security level is configurable via the tool's **Valves** in Open WebUI (Workspace → Tools → Inline Visualizer → gear icon).
 
 <img src="assets/screenshot_tools_workspace.png" alt="Tools workspace with Valves button" width="600"/>
@@ -129,6 +132,3 @@ If you're unsure, leave it on **Strict**. You'll know when you need to change it
 
 > [!NOTE]
 > Even in **None** mode, external API requests may still fail due to CORS (Cross-Origin Resource Sharing) restrictions. This happens when the remote server does not allow cross-origin requests — it is standard browser security behavior and not a tool limitation.
-
-> [!WARNING]
-> When *iframe Sandbox Allow Same Origin* is enabled (step 4 above), JavaScript inside the visualization can access the parent Open WebUI page. This is a platform-level setting that the tool cannot restrict. If you do not need the `sendPrompt` bridge, leave same-origin **disabled** for maximum isolation.
