@@ -1,13 +1,15 @@
 """
 title: Inline Visualizer
 author: Classic298
-version: 1.2.0
+version: 1.3.0
 description: Renders interactive HTML/SVG visualizations inline in chat. For design system instructions, the model should call view_skill("visualize").
 """
 
 import re
+from typing import Literal
 
 from fastapi.responses import HTMLResponse
+from pydantic import BaseModel, Field
 
 
 # ---------------------------------------------------------------------------
@@ -326,6 +328,47 @@ function openLink(url) {
 </script>
 """
 
+# ---------------------------------------------------------------------------
+# STRICT-mode script — strips query params from all navigation and links
+# ---------------------------------------------------------------------------
+
+STRICT_SECURITY_SCRIPT = """
+<script>
+(function() {
+  function stripParams(rawUrl) {
+    try { var u = new URL(rawUrl, location.href); u.search = ''; return u.toString(); }
+    catch(e) { return rawUrl; }
+  }
+
+  // Override openLink to strip query/hash parameters
+  var _origOpenLink = window.openLink;
+  window.openLink = function(url) {
+    _origOpenLink(stripParams(url));
+  };
+
+  // Override window.open to strip query parameters
+  var _origOpen = window.open;
+  window.open = function(url) {
+    arguments[0] = stripParams(url);
+    return _origOpen.apply(this, arguments);
+  };
+
+  // Strip params from all existing and future <a> tags
+  function sanitizeLinks(root) {
+    (root.querySelectorAll ? root : document).querySelectorAll('a[href]').forEach(function(a) {
+      a.href = stripParams(a.href);
+    });
+  }
+  sanitizeLinks(document);
+  new MutationObserver(function(muts) {
+    muts.forEach(function(m) {
+      m.addedNodes.forEach(function(n) { if (n.nodeType === 1) sanitizeLinks(n); });
+    });
+  }).observe(document.body, { childList: true, subtree: true });
+})();
+</script>
+"""
+
 # Kept for backwards compatibility in case anything references the old name
 INJECTED_SCRIPTS = BODY_SCRIPTS
 
@@ -344,18 +387,104 @@ def _sanitize_content(content: str) -> str:
     return content.strip()
 
 
-def _build_html(content: str) -> str:
-    """Wrap a user-provided HTML/SVG fragment in the full Rich UI shell."""
-    content = _sanitize_content(content)
+# ---------------------------------------------------------------------------
+# CSP generation per security level
+# ---------------------------------------------------------------------------
+
+_KNOWN_CDNS = (
+    "https://cdnjs.cloudflare.com"
+    " https://cdn.jsdelivr.net"
+    " https://unpkg.com"
+)
+
+
+def _build_csp_tag(level: str) -> str:
+    """Return a <meta> CSP tag for the given security level, or empty string."""
+    if level == "none":
+        return ""
+
+    if level == "strict":
+        return (
+            '<meta http-equiv="Content-Security-Policy" content="'
+            f"default-src 'self'; "
+            f"script-src 'unsafe-inline' {_KNOWN_CDNS}; "
+            "style-src 'self' 'unsafe-inline'; "
+            "connect-src 'none'; "
+            "form-action 'none'; "
+            "img-src 'self' data: blob:; "
+            "font-src 'self' data:; "
+            "media-src 'self'; "
+            "object-src 'none'; "
+            "base-uri 'self'; "
+            '">' 
+        )
+
+    # balanced: block outbound connections & forms, allow external images
     return (
-        "<!DOCTYPE html><html><head>"
-        f"<style>{THEME_CSS}\n{SVG_CLASSES}\n{BASE_STYLES}</style>"
-        f"{THEME_DETECTION_SCRIPT}"
-        f"</head><body>\n{content}\n{BODY_SCRIPTS}</body></html>"
+        '<meta http-equiv="Content-Security-Policy" content="'
+        f"default-src 'self'; "
+        f"script-src 'unsafe-inline' {_KNOWN_CDNS}; "
+        "style-src 'self' 'unsafe-inline'; "
+        "connect-src 'none'; "
+        "form-action 'none'; "
+        "img-src * data: blob:; "
+        "font-src 'self' data:; "
+        "media-src 'self'; "
+        "object-src 'none'; "
+        "base-uri 'self'; "
+        '">' 
     )
 
 
+def _build_html(content: str, security_level: str = "strict") -> str:
+    """Wrap a user-provided HTML/SVG fragment in the full Rich UI shell."""
+    content = _sanitize_content(content)
+    csp_tag = _build_csp_tag(security_level)
+    strict_script = STRICT_SECURITY_SCRIPT if security_level == "strict" else ""
+    return (
+        "<!DOCTYPE html><html><head>"
+        f"{csp_tag}"
+        f"<style>{THEME_CSS}\n{SVG_CLASSES}\n{BASE_STYLES}</style>"
+        f"{THEME_DETECTION_SCRIPT}"
+        f"</head><body>\n{content}\n{BODY_SCRIPTS}{strict_script}</body></html>"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Valves (user-configurable settings)
+# ---------------------------------------------------------------------------
+
+# Developer reference for security levels:
+#
+#   STRICT   — Blocks all outbound requests, form submissions, external images,
+#              embedded objects, and base-URI hijacking. Injects a script that
+#              strips URL query parameters from all navigation. Recommended default.
+#
+#   BALANCED — Same as STRICT but allows external image loading (img-src *).
+#              No URL parameter stripping.
+#
+#   NONE     — No CSP applied. Visualization can make arbitrary network requests.
+#
+# None of these levels can prevent parent document access when iframe
+# Same-Origin is enabled — that is controlled at the platform level.
+
+
 class Tools:
+    """Inline Visualizer — renders interactive HTML/SVG in chat.
+
+    Security is controlled via the ``security_level`` valve, which applies
+    a Content Security Policy to the rendered iframe. Defaults to STRICT,
+    blocking all silent data exfiltration vectors.
+    """
+
+    class Valves(BaseModel):
+        security_level: Literal["strict", "balanced", "none"] = Field(
+            default="strict",
+            description="Strict (default): blocks outbound requests, images, and forms. Balanced: allows external images. None: no restrictions.",
+        )
+
+    def __init__(self):
+        self.valves = self.Valves()
 
     def render_visualization(
         self,
@@ -388,6 +517,7 @@ class Tools:
         :return: Interactive rich embed rendered in the chat.
         """
         return HTMLResponse(
-            content=_build_html(html_code),
+            content=_build_html(html_code, self.valves.security_level),
             headers={"Content-Disposition": "inline"},
         )
+

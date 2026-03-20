@@ -2,6 +2,8 @@
 
 Renders interactive HTML/SVG visualizations inline in chat. Includes a full design system with theme-aware colors, SVG utility classes, and a communication bridge that lets visualizations send prompts back to the chat.
 
+> **🚀 [Jump to Setup Guide](#setup)** — get up and running in under 2 minutes.
+
 <table>
   <tr>
     <td><img src="assets/screenshot_stock_dashboard.png" alt="Stock dashboard (Qwen 3.5 27B)" width="400"/></td>
@@ -20,12 +22,13 @@ Renders interactive HTML/SVG visualizations inline in chat. Includes a full desi
 ## Features
 
 - Interactive HTML/SVG visualizations embedded as Rich UI cards
-- Auto-detected light/dark theme with full CSS variable design system
+- Auto-detected light/dark theme with live switching support
+- Configurable Content Security Policy (strict / standard / none)
 - 9-color ramp with fill, stroke, and text variants
 - SVG utility classes for text, shapes, connectors, and color-coded nodes
 - Pre-styled interactive elements (buttons, sliders, selects)
 - Chart.js and D3.js support via CDN
-- `sendPrompt(text)` bridge — visualizations can send messages back to the chat for conversational exploration
+- `sendPrompt(text)` bridge — visualizations can send messages back to the chat for conversational exploration (requires same-origin access, see [step 4](#4-enable-same-origin-access))
 - `openLink(url)` bridge — open URLs in a new tab from within visualizations
 
 ## Components
@@ -42,7 +45,7 @@ The **tool** handles rendering and injects the design system (CSS, JS bridges). 
 ## Setup
 
 **Prerequisite**: Fast model is recommended, strong model is required for complex and visually stunning interactive visualizations.
-Tested with Claude Haiku 4.5 and Claude Opus 4.5.
+Tested with Claude Haiku 4.5, Claude Opus 4.5, Claude Opus 4.6, Gemini 3 Flash Preview, and Qwen 3.5 27B.
 
 ### 1. Install the Tool
 
@@ -65,12 +68,15 @@ Tested with Claude Haiku 4.5 and Claude Opus 4.5.
 4. Ensure native function calling is enabled for your model
 5. Save
 
-### 4. (Optional) Enable Same-Origin Access (required for sendPrompt)
+### 4. Enable Same-Origin Access
 
 1. Go to **Settings → Interface**
 2. Enable **iframe Sandbox Allow Same Origin**
 
 Without this, visualizations render normally but **interactive buttons that send prompts back to the chat will not work**.
+
+> [!NOTE]
+> This setting has security implications. Read more about it [here](#security).
 
 ## Usage
 
@@ -91,3 +97,38 @@ Visualizations can include clickable elements that send a message back to the ch
 ```
 
 When clicked, this fills the chat input and sends the message automatically, enabling conversational drill-down into diagram components.
+
+## Security
+
+The tool applies a Content Security Policy (CSP) to every rendered visualization. The security level is configurable via the tool's **Valves** in Open WebUI (Workspace → Tools → Inline Visualizer → gear icon).
+
+<img src="assets/screenshot_tools_workspace.png" alt="Tools workspace with Valves button" width="600"/>
+
+*Open the Valves by clicking the gear icon next to the Inline Visualizer tool.*
+
+<img src="assets/screenshot_valve_dropdown.png" alt="Security level dropdown" width="400"/>
+
+*Select the security level from the dropdown. Strict is the recommended default.*
+
+| Level | Outbound requests | External images | URL param stripping | Use case |
+|-------|:-:|:-:|:-:|------|
+| **Strict** (default) | ❌ Blocked | ❌ Blocked | ✅ Active | Maximum safety. Most visualizations work normally. |
+| **Balanced** | ❌ Blocked | ✅ Allowed | — | Visualizations that display external images (flags, logos). |
+| **None** | ✅ Allowed | ✅ Allowed | — | Visualizations that fetch live API data (stock prices, weather). |
+
+**Strict** (recommended) is the default and works for the vast majority of visualizations. All core features — HTML rendering, SVGs, Chart.js charts, D3 diagrams, emoji icons, quizzes, forms, interactive buttons, animations, and the `sendPrompt` / `openLink` bridges — work normally in every mode.
+
+**What won't work in Strict mode:**
+- Visualizations that load images from the web (e.g. product photos, map tiles, external diagrams)
+- Visualizations that fetch live data directly from external APIs within the embed
+
+**What won't work in Balanced mode:**
+- Visualizations that fetch live data directly from external APIs within the embed
+
+If you're unsure, leave it on **Strict**. You'll know when you need to change it — the visualization will be missing an image or fail to load data.
+
+> [!NOTE]
+> Even in **None** mode, external API requests may still fail due to CORS (Cross-Origin Resource Sharing) restrictions. This happens when the remote server does not allow cross-origin requests — it is standard browser security behavior and not a tool limitation.
+
+> [!WARNING]
+> When *iframe Sandbox Allow Same Origin* is enabled (step 4 above), JavaScript inside the visualization can access the parent Open WebUI page. This is a platform-level setting that the tool cannot restrict. If you do not need the `sendPrompt` bridge, leave same-origin **disabled** for maximum isolation.
