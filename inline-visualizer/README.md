@@ -7,7 +7,7 @@ Renders interactive HTML/SVG visualizations inline in chat. Includes a full desi
 <table>
   <tr>
     <td><img src="assets/screenshot_stock_dashboard.png" alt="Stock dashboard (Qwen 3.5 27B)" width="400"/></td>
-    <td><img src="assets/screenshot_git_branching.png" alt="Git branching flowchart (Qwen 3.5 27B)" width="400"/></td>
+    <td><img src="assets/screenshot_tactical_analysis.png" alt="Tactical analysis dashboard (Qwen 3.5 MoE 3B)" width="400"/></td>
   </tr>
   <tr>
     <td><img src="assets/screenshot_1.png" alt="Interactive quiz" width="400"/></td>

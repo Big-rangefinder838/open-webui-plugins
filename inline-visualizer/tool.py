@@ -92,23 +92,23 @@ SVG_CLASSES = """
 
 /* --- Color ramp selectors (fill/stroke adapt via CSS vars) --- */
 .c-purple>rect,.c-purple>circle,.c-purple>ellipse{fill:var(--ramp-purple-fill);stroke:var(--ramp-purple-stroke);stroke-width:.5}
-.c-purple>.th{fill:var(--ramp-purple-th)} .c-purple>.ts{fill:var(--ramp-purple-ts)}
+.c-purple>.th{fill:var(--ramp-purple-th)!important} .c-purple>.ts{fill:var(--ramp-purple-ts)!important}
 .c-teal>rect,.c-teal>circle,.c-teal>ellipse{fill:var(--ramp-teal-fill);stroke:var(--ramp-teal-stroke);stroke-width:.5}
-.c-teal>.th{fill:var(--ramp-teal-th)} .c-teal>.ts{fill:var(--ramp-teal-ts)}
+.c-teal>.th{fill:var(--ramp-teal-th)!important} .c-teal>.ts{fill:var(--ramp-teal-ts)!important}
 .c-coral>rect,.c-coral>circle,.c-coral>ellipse{fill:var(--ramp-coral-fill);stroke:var(--ramp-coral-stroke);stroke-width:.5}
-.c-coral>.th{fill:var(--ramp-coral-th)} .c-coral>.ts{fill:var(--ramp-coral-ts)}
+.c-coral>.th{fill:var(--ramp-coral-th)!important} .c-coral>.ts{fill:var(--ramp-coral-ts)!important}
 .c-pink>rect,.c-pink>circle,.c-pink>ellipse{fill:var(--ramp-pink-fill);stroke:var(--ramp-pink-stroke);stroke-width:.5}
-.c-pink>.th{fill:var(--ramp-pink-th)} .c-pink>.ts{fill:var(--ramp-pink-ts)}
+.c-pink>.th{fill:var(--ramp-pink-th)!important} .c-pink>.ts{fill:var(--ramp-pink-ts)!important}
 .c-gray>rect,.c-gray>circle,.c-gray>ellipse{fill:var(--ramp-gray-fill);stroke:var(--ramp-gray-stroke);stroke-width:.5}
-.c-gray>.th{fill:var(--ramp-gray-th)} .c-gray>.ts{fill:var(--ramp-gray-ts)}
+.c-gray>.th{fill:var(--ramp-gray-th)!important} .c-gray>.ts{fill:var(--ramp-gray-ts)!important}
 .c-blue>rect,.c-blue>circle,.c-blue>ellipse{fill:var(--ramp-blue-fill);stroke:var(--ramp-blue-stroke);stroke-width:.5}
-.c-blue>.th{fill:var(--ramp-blue-th)} .c-blue>.ts{fill:var(--ramp-blue-ts)}
+.c-blue>.th{fill:var(--ramp-blue-th)!important} .c-blue>.ts{fill:var(--ramp-blue-ts)!important}
 .c-green>rect,.c-green>circle,.c-green>ellipse{fill:var(--ramp-green-fill);stroke:var(--ramp-green-stroke);stroke-width:.5}
-.c-green>.th{fill:var(--ramp-green-th)} .c-green>.ts{fill:var(--ramp-green-ts)}
+.c-green>.th{fill:var(--ramp-green-th)!important} .c-green>.ts{fill:var(--ramp-green-ts)!important}
 .c-amber>rect,.c-amber>circle,.c-amber>ellipse{fill:var(--ramp-amber-fill);stroke:var(--ramp-amber-stroke);stroke-width:.5}
-.c-amber>.th{fill:var(--ramp-amber-th)} .c-amber>.ts{fill:var(--ramp-amber-ts)}
+.c-amber>.th{fill:var(--ramp-amber-th)!important} .c-amber>.ts{fill:var(--ramp-amber-ts)!important}
 .c-red>rect,.c-red>circle,.c-red>ellipse{fill:var(--ramp-red-fill);stroke:var(--ramp-red-stroke);stroke-width:.5}
-.c-red>.th{fill:var(--ramp-red-th)} .c-red>.ts{fill:var(--ramp-red-ts)}
+.c-red>.th{fill:var(--ramp-red-th)!important} .c-red>.ts{fill:var(--ramp-red-ts)!important}
 """
 
 # ---------------------------------------------------------------------------
@@ -498,6 +498,10 @@ class Tools:
         before calling this tool. Never generate a visualization without reading the skill
         instructions first — they contain critical rules for colors, layout, SVG setup,
         chart patterns, and common failure points.
+
+        After calling this tool, do NOT repeat or echo back the HTML/SVG source code in
+        your text response. The visualization is already rendered and visible to the user.
+        Instead, briefly describe what the visualization shows in plain language.
 
         The system automatically injects:
         - Theme CSS variables (auto-detected light/dark mode)
