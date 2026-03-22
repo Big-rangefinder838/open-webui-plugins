@@ -28,7 +28,7 @@ Renders interactive HTML/SVG visualizations inline in chat. Includes a full desi
 - SVG utility classes for text, shapes, connectors, and color-coded nodes
 - Pre-styled interactive elements (buttons, sliders, selects)
 - Chart.js and D3.js support via CDN
-- `sendPrompt(text)` bridge — visualizations can send messages back to the chat for conversational exploration (requires same-origin access, see [step 4](#4-enable-same-origin-access))
+- `sendPrompt(text)` bridge — visualizations can send messages back to the chat for conversational exploration (works out of the box since Open WebUI 0.8.11; see [step 4](#4-enable-same-origin-access) for auto-submit)
 - `openLink(url)` bridge — open URLs in a new tab from within visualizations
 
 ## Components
@@ -70,13 +70,18 @@ Tested with Claude Haiku 4.5, Claude Opus 4.5, Claude Opus 4.6, Gemini 3 Flash P
 
 ### 4. Enable Same-Origin Access
 
+> [!IMPORTANT]
+> **COMPLETELY OPTIONAL**
+> As of **Open WebUI 0.8.11**, interactive buttons that send prompts back to the chat (`sendPrompt`) work **without** enabling same-origin. A confirmation dialog will appear each time, letting you review the prompt before it is submitted.
+> Same-origin access is only required if you want to **auto-submit** without confirmation.
+
+If you prefer **auto-submit without confirmation**, enable same-origin:
+
 1. Go to **Settings → Interface**
 2. Enable **iframe Sandbox Allow Same Origin**
 
-Without this, visualizations render normally but **interactive buttons that send prompts back to the chat will not work**.
-
 > [!NOTE]
-> This setting has security implications. Read more about it [here](#security).
+> Enabling same-origin has security implications — JavaScript inside the visualization gains access to the parent page. If you're fine with the confirmation dialog, you can skip this step entirely. Read more [here](#security).
 
 ## Usage
 
@@ -101,7 +106,7 @@ When clicked, this fills the chat input and sends the message automatically, ena
 ## Security
 
 > [!WARNING]
-> When *iframe Sandbox Allow Same Origin* is enabled (step 4 above), JavaScript inside the visualization can access the parent Open WebUI page. This is a platform-level setting that the tool cannot restrict. If you do not need the `sendPrompt` bridge, leave same-origin **disabled** for maximum isolation.
+> When *iframe Sandbox Allow Same Origin* is enabled (optional step 4), JavaScript inside the visualization can access the parent Open WebUI page. This is a platform-level setting that the tool cannot restrict. Since Open WebUI 0.8.11, the `sendPrompt` bridge works without same-origin (via a confirmation dialog), so you can leave same-origin **disabled** for maximum isolation without losing functionality.
 
 The tool applies a Content Security Policy (CSP) to every rendered visualization. The security level is configurable via the tool's **Valves** in Open WebUI (Workspace → Tools → Inline Visualizer → gear icon).
 

@@ -1,7 +1,7 @@
 """
 title: Inline Visualizer
 author: Classic298
-version: 1.3.1
+version: 1.3.2
 description: Renders interactive HTML/SVG visualizations inline in chat. For design system instructions, the model should call view_skill("visualize").
 """
 
@@ -272,22 +272,48 @@ window.addEventListener('load', function() {
     });
   }
 
-  // SVG label overlap — group texts by x-center, stagger if adjacent groups overlap
+  // SVG axis-label overlap — stagger only labels in a tight horizontal band
+  // (skips complex diagrams where text is scattered across the full canvas)
   document.querySelectorAll('svg').forEach(function(svg) {
     var texts = Array.from(svg.querySelectorAll('text'));
     if (texts.length < 4) return;
-    var groups = [];
+    // Collect bounding info for all visible texts
+    var items = [];
     texts.forEach(function(t) {
       var r = t.getBoundingClientRect();
       if (r.width < 1) return;
-      var cx = r.left + r.width / 2;
+      items.push({ el: t, rect: r, cx: r.left + r.width / 2, cy: r.top + r.height / 2 });
+    });
+    if (items.length < 4) return;
+    // Only stagger texts that sit in a narrow y-band (axis labels).
+    // If texts span a wide vertical range, this is a diagram — skip entirely.
+    var minY = Infinity, maxY = -Infinity;
+    items.forEach(function(it) {
+      if (it.cy < minY) minY = it.cy;
+      if (it.cy > maxY) maxY = it.cy;
+    });
+    var ySpan = maxY - minY;
+    if (ySpan < 1) return;
+    // Find the y-band with the most texts (likely the axis row)
+    var bandSize = 30; // px tolerance for "same row"
+    var bestBand = [], bestCount = 0;
+    items.forEach(function(anchor) {
+      var band = items.filter(function(it) { return Math.abs(it.cy - anchor.cy) < bandSize; });
+      if (band.length > bestCount) { bestCount = band.length; bestBand = band; }
+    });
+    // Only proceed if the best band has 3+ labels AND doesn't cover most texts
+    // (if most texts are in the band, it's likely a simple chart; otherwise a diagram)
+    if (bestBand.length < 3 || bestBand.length === items.length && ySpan > 60) return;
+    // Use only the best-band texts for grouping/stagger
+    var groups = [];
+    bestBand.forEach(function(it) {
       for (var i = 0; i < groups.length; i++) {
-        if (Math.abs(groups[i].cx - cx) < 15) {
-          groups[i].items.push({ el: t, rect: r });
+        if (Math.abs(groups[i].cx - it.cx) < 15) {
+          groups[i].items.push(it);
           return;
         }
       }
-      groups.push({ cx: cx, items: [{ el: t, rect: r }] });
+      groups.push({ cx: it.cx, items: [it] });
     });
     if (groups.length < 3) return;
     groups.sort(function(a, b) { return a.cx - b.cx; });
